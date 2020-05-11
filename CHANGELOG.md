@@ -9,7 +9,7 @@ and this repository adheres to [Semantic Versioning](https://semver.org/spec/v2.
 ### Added
 - Initial repository framework and documentation.
 
-## [1.0.0] - 2020-05-11
+## [1.0.0] - 2020-05-11 - RELEASE
 ### Added
 - Initial version of YAML plays for SAS administration and AWS administration.
 - Initial version of YAML play to execute SAS using Ansible.
