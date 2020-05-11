@@ -1,0 +1,118 @@
+# Purpose: Update SAS configuration for tuning, configuration and performance needs. Update Performance
+#          configuration based on target environment.
+# Key Dependencies:
+#   - Become SAS user and ROOT user (ROOT to add an environment definition to profile.d)
+#   - SAS Viya deployment inventory file
+#   - Update configuration parameters written to configuration files for target environment needs
+---
+- name: Update SAS Configuration
+  hosts: programming
+  gather_facts: false
+  become: true
+  become_user: sas
+  tasks:
+    - name: Update SASV9.CFG for SPRE Foundation
+      blockinfile:
+        path: /opt/sas/spre/home/SASFoundation/sasv9_local.cfg
+        block: |
+          -work /saswork
+          -memsize 30G
+          -realmemsize 20G
+          -sumsize 20G
+          -sortsize 20G
+          -maxmemquery 20G
+          -workperms 777
+          -threads
+          -compress yes
+          -errors 5
+          -cpucount actual
+        owner: sas
+        group: sas
+        marker: "/** {mark} Custom SAS Performance Configuration **/"
+
+# NOTE: SAS Viya assumes CGroups has been installed
+- name: Update CAS memory limit for CGroups
+  hosts: sas_casserver_primary
+  gather_facts: false
+  become: true
+  become_user: sas
+  tasks:
+    - blockinfile:
+        path: /opt/sas/viya/config/etc/cas/default/casconfig_usermods.lua
+        state: present
+        block: |
+          cas.memorysize='225g'
+        owner: sas
+        group: sas
+        marker: "---- {mark} CAS connection details ----"
+
+- name: Create SAS profile
+  hosts: programming
+  gather_facts: false
+  become: true
+  become_user: root
+  tasks:
+    - name: Touch file to create sas.sh profile
+      file:
+        path: /etc/profile.d/sas.sh
+        state: touch
+
+    - name: Create SAS environment variables in /etc/profile.d/sas.sh
+      blockinfile:
+        path: /etc/profile.d/sas.sh
+        block: |
+          umask 002
+          export SASHOME=/opt/sas/viya/home
+          export SAS_SPRE=/opt/sas/spre/home/SASFoundation
+          export SAS_FOUNDATION_UTIL=$SASHOME/SASFoundation/utilities
+          export PATH=$PATH:$SAS_SPRE:$SASHOME/bin:$SAS_FOUNDATION_UTIL/bin
+          export PGCLIENTENCODING=UTF8
+          export PGSSLMODE=require
+          export EASYSOFT_UNICODE=yes
+          export ODBCINI=/opt/sas/viya/home/odbc.ini
+          export ODBCINST=/opt/sas/viya/home/odbcinst.ini
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/sas/spre/home/lib64
+        owner: root
+        group: root
+
+- name: Update SAS Workspace Server Configuration
+  hosts: programming
+  gather_facts: false
+  become: true
+  become_user: sas
+  tasks:
+    - name: Update SASV9.CFG
+      blockinfile:
+        path: /opt/sas/viya/config/etc/workspaceserver/default/workspaceserver_usermods.sh
+        block: |
+          umask 002
+          export PGCLIENTENCODING=UTF8
+          export PGSSLMODE=require
+          export EASYSOFT_UNICODE=yes
+          export ODBCINI=/opt/sas/viya/home/odbc.ini
+          export ODBCINST=/opt/sas/viya/home/odbcinst.ini
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/sas/spre/home/lib64
+        owner: sas
+        group: sas
+        marker: "# {mark} Workspace Server Configuration"
+
+- name: Update ODBC configuration for SAS Foundation Environment
+  hosts: programming
+  gather_facts: false
+  become: true
+  become_user: sas
+  tasks:
+    - name: Update sasenv_local
+      blockinfile:
+        path: /opt/sas/spre/home/SASFoundation/bin/sasenv_local
+        block: |
+          umask 002
+          export PGCLIENTENCODING=UTF8
+          export PGSSLMODE=require
+          export EASYSOFT_UNICODE=yes
+          export ODBCINI=/opt/sas/viya/home/odbc.ini
+          export ODBCINST=/opt/sas/viya/home/odbcinst.ini
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/sas/spre/home/lib64
+        owner: sas
+        group: sas
+        marker: "# {mark} SAS Foundation Configuration"

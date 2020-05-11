@@ -1,0 +1,27 @@
+# Purpose: Delete log files (*.log) older than a specified number of days.
+# Key Dependencies:
+#   - Become ROOT user
+#   - SAS Viya deployment inventory file
+#   - Set YAML variable: "age_retention_limit" for maximum age of log file to keep
+---
+- name: Purge SAS Logs
+  hosts: sas_all
+  gather_facts: true
+  become: true
+  become_user: root
+  vars:
+    age_retention_limit: 7d
+  tasks:
+    - name: Collect SAS logs to delete
+      find:
+        paths: /var/log/sas/viya
+        patterns: '*.log'
+        age: "{{ age_retention_limit }}"
+        recurse: true
+      register: files_to_delete
+
+    - name: Remove log files
+      file:
+        path: "{{ item.path }}"
+        state: absent
+      with_items: "{{ files_to_delete.files }}"

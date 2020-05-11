@@ -1,0 +1,21 @@
+# Purpose: Example execution of SAS from the command line for batch job processing or command line execution.
+# Key Dependencies:
+#   - Become SAS user (update this for appropriate service account to run SAS)
+#   - SAS Viya deployment inventory file (update target host as needed)
+#   - Update /etc/hosts IP addresses and hostnames within text block
+#   - Set YAML variable: "pgmname" to fully qualified path and filename of SAS program to execute, including file extension
+#   - Set YAML variable: "logname" to fully qualified path and filename of log file to store, EXCLUDING file extension
+---
+- name: Run SAS Process
+  hosts: programming
+  gather_facts: yes
+  become: yes
+  become_user: sas
+  vars:
+    pgmname: "REPLACEME"
+    logname: "REPLACEME_{{ ansible_date_time.iso8601_basic_short }}.log"
+  tasks:
+    - name: SAS Execution
+      shell: /opt/sas/spre/home/SASFoundation/sas {{ pgmname }} -log {{ logname }}
+      register: output
+      failed_when: output.rc >= 2

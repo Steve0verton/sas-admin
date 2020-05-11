@@ -1,0 +1,49 @@
+# Purpose: Add storage to SAS CAS worker nodes for disk cache.
+# Key Dependencies:
+#   - Become ROOT user (to install packages with yum)
+#   - SAS Viya deployment inventory file
+#   - Standard yum repositories available to download mdadm
+#   - Set YAML variable: "sascache_owner" and "sascache_group" for target filesystem permissions
+---
+- name: Setup SASCACHE for CAS workers
+  hosts: sas_casserver_worker
+  gather_facts: false
+  become: true
+  become_user: root
+  vars:
+    sascache_owner: sas
+    sascache_group: sas
+  tasks:
+    - name: Install MDADM
+      yum:
+        name: mdadm
+        state: latest
+
+    # NOTE: Confirm RAID and device configuration for target environment.
+    - name: Configure RAID0
+      command: mdadm --create --verbose /dev/md0 --level=0 --name=SASCACHE --raid-devices=2 /dev/nvme1n1 /dev/nvme2n1
+
+    - name: Reload info for kernel
+      shell: dracut -H -f /boot/initramfs-$(uname -r).img $(uname -r)
+
+    # NOTE: Confirm filesystem options for target environment
+    - name: Make XFS Filesystem for SASCACHE
+      command: mkfs.xfs -L SASCACHE -i size=512 -b size=4096 -d sunit=1024,swidth=2048 /dev/md0
+
+    - name: Mount RAID Filesystem to /sascache
+      mount:
+        path: /sascache
+        src: /dev/md0
+        fstype: xfs
+        opts: noatime,nodiratime,nobarrier,nofail
+        state: mounted
+
+    - name: Update permissions and ownership for SASCACHE
+      file:
+        path: /sascache
+        owner: "{ sascache_owner }"
+        group: "{ sascache_group }"
+        mode: 01777
+
+    - name: Reload Daemon to prevent creation refresh problems
+      command: systemctl daemon-reload

@@ -1,0 +1,111 @@
+# Purpose: Retrieve as many useful logs for SAS technical troubleshooting as possible. S3 storage can be used
+#          to send logs to SAS technical support.  S3 bucket configuration not included with this playbook.
+# Key Dependencies:
+#   - Become ROOT user (to capture Apache web server logs)
+#   - SAS Viya deployment inventory file
+#   - AWS CLI configured with AWS_ACCESS_KEY and AWS_SECRET_KEY available as environment variables (if sending to S3)
+#   - Set YAML variable: "s3_target_bucket" for S3 bucket definition (if sending to S3)
+---
+- name: Capture SAS logs
+  hosts: sas_all
+  gather_facts: true
+  become: true
+  become_user: root
+  tasks:
+    - name: Compress and archive SAS logs from /var/log/sas/viya/*/
+      archive:
+        path:
+        - /var/log/sas/viya/*/
+        dest: /tmp/sas_logs.tar.gz
+        format: gz
+
+    - name: Compress and archive Apache logs
+      archive:
+        path:
+        - /var/log/httpd/*
+        dest: /tmp/apache_logs.tar.gz
+        format: gz
+      when: inventory_hostname in groups['httpproxy']
+
+    - name: Compress and archive /var/log/messages
+      archive:
+        path:
+        - /var/log/messages
+        dest: /tmp/var_log_messages.tar.gz
+        format: gz
+
+    - name: Compress and archive /var/log/dmesg
+      archive:
+        path:
+        - /var/log/dmesg
+        dest: /tmp/var_log_dmesg.tar.gz
+        format: gz
+
+# NOTE: Remove this play which pushes to S3 if AWS not leveraged or not needed. Replace with another process or manually retrieve logs.
+- name: Push logs to S3
+  hosts: sas_all
+  gather_facts: true
+  become: true
+  become_user: root
+  vars:
+    s3_target_bucket: REPLACEME
+  tasks:
+    - name: Put SAS logs in S3
+      aws_s3:
+        bucket: "{{ s3_target_bucket }}"
+        object: "{{inventory_hostname_short}}_sas_logs.tar.gz"
+        src: /tmp/sas_logs.tar.gz
+        permission: public-read
+        mode: put
+
+    - name: Put Apache logs in S3
+      aws_s3:
+        bucket: "{{ s3_target_bucket }}"
+        object: "{{inventory_hostname_short}}_apache_logs.tar.gz"
+        src: /tmp/apache_logs.tar.gz
+        permission: public-read
+        mode: put
+      when: inventory_hostname in groups['httpproxy']
+
+    - name: Put /var/log/messages log in S3
+      aws_s3:
+        bucket: "{{ s3_target_bucket }}"
+        object: "{{inventory_hostname_short}}_var_log_messages.tar.gz"
+        src: /tmp/var_log_messages.tar.gz
+        permission: public-read
+        mode: put
+
+    - name: Put dmesg log in S3
+      aws_s3:
+        bucket: "{{ s3_target_bucket }}"
+        object: "{{inventory_hostname_short}}_var_log_dmesg.tar.gz"
+        src: /tmp/var_log_dmesg.tar.gz
+        permission: public-read
+        mode: put
+
+- name: Cleanup logs
+  hosts: sas_all
+  gather_facts: true
+  become: true
+  become_user: root
+  tasks:
+    - name: Cleanup /tmp/sas_logs.tar.gz
+      file:
+        path: /tmp/sas_logs.tar.gz
+        state: absent
+
+    - name: Cleanup /tmp/apache_logs.tar.gz
+      file:
+        path: /tmp/apache_logs.tar.gz
+        state: absent
+      when: inventory_hostname in groups['httpproxy']
+
+    - name: Cleanup /tmp/var_log_messages.tar.gz
+      file:
+        path: /tmp/var_log_messages.tar.gz
+        state: absent
+
+    - name: Cleanup /tmp/var_log_dmesg.tar.gz
+      file:
+        path: /tmp/var_log_dmesg.tar.gz
+        state: absent

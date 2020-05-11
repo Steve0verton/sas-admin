@@ -1,0 +1,61 @@
+# Purpose: Setup ODBC connection on programming environment server.
+# Key Dependencies:
+#   - Become SAS user to update config
+#   - SAS Viya deployment inventory file
+#   - Setup database connection parameters within text blocks defined below (REPLACEME).
+---
+- name: Setup ODBC connection on programming environment server
+  hosts: programming
+  gather_facts: false
+  become: true
+  become_user: sas
+  tasks:
+    - name: Touch odbc.ini file
+      file:
+        path: /opt/sas/viya/home/odbc.ini
+        state: touch
+
+    - name: Touch odbcinst.ini file
+      file:
+        path: /opt/sas/viya/home/odbcinst.ini
+        state: touch
+
+    - blockinfile:
+        path: /opt/sas/viya/home/odbc.ini
+        state: present
+        block: |
+          [REPLACEME]
+          Driver=/opt/sas/spre/home/lib64/psqlodbcw.so
+          Servername=REPLACEME
+          SSLmode=require
+          Database=REPLACEME
+          Username=REPLACEME
+          Password=REPLACEME
+          Port=5432
+          UseServerSidePrepare=1
+          UseDeclareFetch=1
+          Fetch=10000
+
+          [REPLACEME]
+          Driver=/opt/sas/spre/home/lib64/psqlodbcw.so
+          Servername=REPLACEME
+          SSLmode=require
+          Database=REPLACEME
+          Username=REPLACEME
+          Password=REPLACEME
+          Port=5432
+          UseServerSidePrepare=1
+          UseDeclareFetch=1
+          Fetch=10000
+        marker: "#---- {mark} ODBC connection details ----"
+
+    - blockinfile:
+        path: /opt/sas/viya/home/odbcinst.ini
+        state: present
+        block: |
+          [ODBC Drivers]
+          PostgreSQL=Installed
+          [PostgreSQL]
+          Description=ODBC for PostgreSQL
+          Driver=/opt/sas/spre/home/lib64/psqlodbcw.so
+        marker: "#---- {mark} ODBC connection details ----"

@@ -1,0 +1,27 @@
+# Purpose: Append local hostnames for environment within /etc/hosts file for each server in environment.
+# Key Dependencies:
+#   - Become ROOT user (to update /etc/hosts)
+#   - SAS Viya deployment inventory file
+#   - Update /etc/hosts IP addresses and hostnames within text block
+---
+- name: Add local environment private IPs to /etc/hosts
+  hosts: sas_all
+  gather_facts: false
+  become: true
+  become_user: root
+  tasks:
+    - name: Append /etc/hosts
+      blockinfile:
+        path: /etc/hosts
+        state: present
+        block: |
+          10.1.1.141   services.int.REPLACEME.com services
+          10.1.1.78    app1.int.REPLACEME.com app1
+          10.1.3.26    app2.int.REPLACEME.com app2
+          10.1.1.221   casworker1.int.REPLACEME.com casworker1
+          10.1.1.213   esdata1.int.REPLACEME.com esdata1
+          10.1.1.243   esdata2.int.REPLACEME.com esdata2
+          10.1.1.167   esdata3.int.REPLACEME.com esdata3
+          10.1.1.163   esdata4.int.REPLACEME.com esdata4
+          10.1.1.130   esdata5.int.REPLACEME.com esdata5
+        marker: "# {mark} Internal environment "

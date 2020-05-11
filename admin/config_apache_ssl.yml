@@ -1,0 +1,93 @@
+# Purpose: Copy SSL certificates to target SAS Apache web server and configure SSL. 
+# Key Dependencies:
+#   - Become ROOT user
+#   - SAS Viya deployment inventory file
+#   - AWS CLI configured with AWS_ACCESS_KEY and AWS_SECRET_KEY available as environment variables (if using S3).
+#   - Set YAML variable: "s3_source_bucket" for source S3 bucket name which contains SSL encryption keys.
+#   - Set YAML variable: "s3_source_path" for source S3 bucket path which contains SSL encryption keys.
+#   - Set YAML variable: "s3_source_cert_body" for source encryption certificate body file.
+#   - Set YAML variable: "s3_source_cert_root" for source encryption certificate root or chain file.
+#   - Set YAML variable: "s3_source_cert_private" for source encryption certificate private key file.
+---
+#NOTE: Remove this play if AWS S3 storage is not used and replace with a play or manual task to copy key files to target server.
+- name: Get SSL certificate files from source location
+  hosts: httpproxy
+  gather_facts: false
+  become: true
+  become_user: root
+  vars:
+    s3_source_bucket: REPLACEME       #NOTE: Bucket name without leading or trailing slashes
+    s3_source_path: REPLACEME         #NOTE: Include leading and trailing slash for path within S3 bucket
+    s3_source_cert_body: REPLACEME     #NOTE: Include file extension
+    s3_source_cert_root: REPLACEME     #NOTE: Include file extension
+    s3_source_cert_private: REPLACEME  #NOTE: Include file extension
+  tasks:
+    - name: Get certificate SSL body
+      aws_s3:
+        bucket: "{{ s3_target_bucket }}"
+        object: "/{{ s3_source_path }}/{{ s3_source_cert_body }}"
+        dest: "/etc/pki/tls/certs/{{ s3_source_cert_body }}"
+        mode: get
+
+    - name: Get root certificate
+      aws_s3:
+        bucket: "{{ s3_target_bucket }}"
+        object: "/{{ s3_source_path }}/{{ s3_source_cert_root }}"
+        dest: "/etc/pki/tls/certs/{{ s3_source_cert_root }}"
+        mode: get
+
+    - name: Get certificate private key
+      aws_s3:
+        bucket: "{{ s3_target_bucket }}"
+        object: "/{{ s3_source_path }}/{{ s3_source_cert_private }}"
+        dest: "/etc/pki/tls/private/{{ s3_source_cert_private }}"
+        mode: get
+
+    - name: Update permissions on certificate body file
+      file:
+        path: "/etc/pki/tls/certs/{{ s3_source_cert_body }}"
+        owner: root
+        group: root
+        mode: 0664
+
+    - name: Update permissions on root certificate file
+      file:
+        path: "/etc/pki/tls/certs/{{ s3_source_cert_root }}"
+        owner: root
+        group: root
+        mode: 0664
+
+    - name: Update permissions on private certificate key file
+      file:
+        path: "/etc/pki/tls/private/{{ s3_source_cert_private }}"
+        owner: root
+        group: root
+        mode: 0600
+
+- name: Configure Apache
+  hosts: httpproxy
+  gather_facts: false
+  become: true
+  become_user: root
+  vars:
+    s3_source_cert_body: REPLACEME     #NOTE: Include file extension
+    s3_source_cert_root: REPLACEME     #NOTE: Include file extension
+    s3_source_cert_private: REPLACEME  #NOTE: Include file extension
+  tasks:
+    - name: Update SSLCertificateFile in Apache config
+      lineinfile:
+        path: /etc/httpd/conf.d/ssl.conf
+        regexp: '^SSLCertificateFile'
+        line: "SSLCertificateFile /etc/pki/tls/certs/{{ s3_source_cert_body }}"
+
+    - name: Update SSLCertificateKeyFile in Apache config
+      lineinfile:
+        path: /etc/httpd/conf.d/ssl.conf
+        regexp: '^SSLCertificateKeyFile'
+        line: "SSLCertificateKeyFile /etc/pki/tls/private/{{ s3_source_cert_private }}"
+
+    - name: Update SSLCertificateChainFile in Apache config
+      lineinfile:
+        path: /etc/httpd/conf.d/ssl.conf
+        regexp: '^#SSLCertificateChainFile'
+        line: "SSLCertificateChainFile /etc/pki/tls/certs/{{ s3_source_cert_root }}"

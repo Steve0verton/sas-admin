@@ -1,0 +1,16 @@
+# Purpose: Update all operating system packages with yum.
+# Key Dependencies:
+#   - Become ROOT user to run yum
+#   - SAS Viya deployment inventory file
+# NOTES:
+#   - This will force SAS to update packages as well if SAS Viya is deployed.
+---
+- name: Upgrade All Packages with YUM
+  hosts: sas_all
+  gather_facts: false
+  become: true
+  become_user: root
+  tasks:
+    - yum:
+        name: '*'
+        state: latest
