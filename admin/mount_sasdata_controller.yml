@@ -3,7 +3,7 @@
 #   - Become ROOT user (to install packages with yum)
 #   - SAS Viya deployment inventory file
 #   - Standard yum repositories available to download mdadm
-#   - Set YAML variable: "sascache_owner" and "sascache_group" for target filesystem permissions
+#   - Set YAML variable: "sasdata_owner" and "sasdata_group" for target filesystem permissions
 ---
 - name: Setup SASDATA on programming environment server
   hosts: programming
