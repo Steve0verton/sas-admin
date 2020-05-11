@@ -15,7 +15,7 @@ Collection of Ansible orchestration playbooks for day to day SAS administration 
  * Leverages SAS Viya deployment Ansible inventory file
  * Primary focus on SAS administration with some AWS cloud enablement that can be replaced
 
-**aws**:
+**aws (upcoming)**:
  * Build and manage AWS resources for SAS deployments
  * Ansible playbooks and tasks written in YAML
  * Amazon Web Services dependent
@@ -31,7 +31,7 @@ Collection of Ansible orchestration playbooks for day to day SAS administration 
  * Requires SAS Foundation
  * Assumes any SAS dependencies such as CAS or metadata aware connections are made within program or autoexec definition
 
-**validation**:
+**validation (upcoming)**:
  * Tasks to validate SAS microservices
  * Ansible playbooks and tasks written in YAML
  * Requires configured AWS command line interface tool
