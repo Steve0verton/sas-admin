@@ -1,0 +1,16 @@
+# Purpose: Upgrade the RDS instance class to something bigger for purposes of handling heavy data management processing.
+# Key Dependencies:
+#   - AWS CLI configured with AWS_ACCESS_KEY and AWS_SECRET_KEY available as environment variables to manage RDS service
+#   - RDS options within task: instance_name, instance_type, parameter_group (optional)
+---
+- name: Upgrade Database Instance Class
+  hosts: localhost
+  gather_facts: true
+  tasks:
+    - rds:
+        command: modify
+        instance_name: REPLACEME
+        instance_type: REPLACEME
+        parameter_group: REPLACEME
+        apply_immediately: yes
+        wait: yes

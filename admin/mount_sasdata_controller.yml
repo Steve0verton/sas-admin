@@ -4,6 +4,7 @@
 #   - SAS Viya deployment inventory file
 #   - Standard yum repositories available to download mdadm
 #   - Set YAML variable: "sasdata_owner" and "sasdata_group" for target filesystem permissions
+#   - Defined directory structure within conceptual SASDATA
 ---
 - name: Setup SASDATA on programming environment server
   hosts: programming

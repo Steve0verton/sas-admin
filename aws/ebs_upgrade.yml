@@ -1,0 +1,40 @@
+# Purpose: Upgrade EBS volume storage class to maximize savings for environments which are not running all the time.
+# Key Dependencies:
+#   - AWS CLI configured on Ansible control node with AWS_ACCESS_KEY and AWS_SECRET_KEY available as environment variables (if sending to S3)
+#   - AWS EBS volume ID references throughout remote commands
+# Notes:
+#   - This playbook can be used to upgrade EBS storage for environments which are not powered on all the time.
+#   - AWS has a limitation of only allowing changes every 6 hours.
+---
+- name: Upgrade EBS Volume Storage
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    # APP
+    - name: Change to SSD Storage
+      command: aws ec2 modify-volume --volume-type gp2 --volume-id REPLACEME
+    # ESDATA1
+    - name: Change to SSD Storage
+      command: aws ec2 modify-volume --volume-type gp2 --volume-id REPLACEME
+    - name: Change to SSD Storage
+      command: aws ec2 modify-volume --volume-type gp2 --volume-id REPLACEME
+    # ESDATA2
+    - name: Change to SSD Storage
+      command: aws ec2 modify-volume --volume-type gp2 --volume-id REPLACEME
+    - name: Change to SSD Storage
+      command: aws ec2 modify-volume --volume-type gp2 --volume-id REPLACEME
+    # ESDATA3
+    - name: Change to SSD Storage
+      command: aws ec2 modify-volume --volume-type gp2 --volume-id REPLACEME
+    - name: Change to SSD Storage
+      command: aws ec2 modify-volume --volume-type gp2 --volume-id REPLACEME
+    # ESDATA4
+    - name: Change to SSD Storage
+      command: aws ec2 modify-volume --volume-type gp2 --volume-id REPLACEME
+    - name: Change to SSD Storage
+      command: aws ec2 modify-volume --volume-type gp2 --volume-id REPLACEME
+    # ESDATA5
+    - name: Change to SSD Storage
+      command: aws ec2 modify-volume --volume-type gp2 --volume-id REPLACEME
+    - name: Change to SSD Storage
+      command: aws ec2 modify-volume --volume-type gp2 --volume-id REPLACEME

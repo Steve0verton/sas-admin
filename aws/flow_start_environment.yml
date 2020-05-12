@@ -1,0 +1,17 @@
+# Purpose: Flow to run a series of playbooks to start an environment and dependencies.
+# Key Dependencies:
+#   - Inidividual playbooks must exist to accomplish necessary tasks.
+# Notes:
+#   - This flow is more of an example to demonstrate the benefits of orchestrating and standardizing
+#     tasks to start/stop environments within AWS and optimizing cost savings.
+---
+# Upgrade storage
+- import_playbook: ebs_upgrade.yml
+
+# TODO: Placeholder for starting database
+
+# Start Environment
+- import_playbook: start_environment.yml
+
+# Start SAS Services
+- import_playbook: viya-ark-master/playbooks/viya-mmsu/viya-services-start.yml

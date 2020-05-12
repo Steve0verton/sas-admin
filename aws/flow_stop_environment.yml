@@ -1,0 +1,17 @@
+# Purpose: Flow to run a series of playbooks to stop an environment and dependencies.
+# Key Dependencies:
+#   - Inidividual playbooks must exist to accomplish necessary tasks.
+# Notes:
+#   - This flow is more of an example to demonstrate the benefits of orchestrating and standardizing
+#     tasks to start/stop environments within AWS and optimizing cost savings.
+---
+# Stop SAS Services
+- import_playbook: viya-ark-master/playbooks/viya-mmsu/viya-services-stop.yml
+
+# Downgrade storage
+- import_playbook: ebs_downgrade.yml
+
+# TODO: Placeholder for stopping database
+
+# Stop Environment
+- import_playbook: stop_environment.yml

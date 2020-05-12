@@ -1,7 +1,9 @@
-# Purpose: Insert hostname and fully qualified hostname in /etc/hosts just prior to localhost definition
+# Purpose: Insert dynamic hostname and fully qualified hostname in /etc/hosts just prior to localhost definition
 # Key Dependencies:
 #   - Become ROOT user
 #   - SAS Viya deployment inventory file
+# Notes:
+#   - This uses Ansible inventory to get the hostname of the target machine(s) and inserts within the target machine.
 ---
 - name: Insert hostname and fully qualified hostname in /etc/hosts just prior to localhost definition
   hosts: sas_all

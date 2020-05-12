@@ -93,9 +93,10 @@ Additional properties such as last modified timestamps, authorship and revision 
  - Indentation = 2 spaces with no tabs.
  - Empty line separating each Ansible task.
  - Tasks are named.
- - Boolean values are specified as "true" and "false".
+ - Boolean values for Ansible plays are specified as "true" and "false", individual tasks may use "yes" or "no" deepending on module requirements.
  - Important variables are defined within play using **vars** list.
  - The phrase **NOTE:** is used to highlight important notes throughout code.
+ - The phrase **TODO:** is used to note future enhancements.
  - Universal text to highlight replacement of text with environment-specific value: **REPLACME**.
 
 # Reference

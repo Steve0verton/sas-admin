@@ -1,0 +1,14 @@
+# Purpose: Shutdown all machines in target environment.
+# Key Dependencies:
+#   - Become ROOT user (to shutdown environment)
+#   - SAS Viya deployment inventory file
+---
+- name: Shutdown environment
+  hosts: sas_all
+  gather_facts: no
+  become: yes
+  become_user: root
+  tasks:
+    - name: Remote Shutdown
+      command: /sbin/shutdown -h now
+      ignore_errors: true

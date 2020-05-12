@@ -1,0 +1,29 @@
+# Purpose: Startup target environment using AWS CLI and set of predefined tags set on target environment.
+#          Tag "Environment" is used below, but any AWS tag can be leveraged to identify the EC2 instances to start.
+# Key Dependencies:
+#   - AWS CLI configured with AWS_ACCESS_KEY and AWS_SECRET_KEY available as environment variables (if sending to S3).
+#   - Replace tag filter in ec2_instance_facts task with target environment to start.
+#   - Target environment has appropriate tags defined in AWS. Tag name = Environment.
+---
+- name: Startup Environment
+  hosts: localhost
+  tasks:
+    - name: Collect Instance IDs
+      ec2_instance_facts:
+        filters:
+          "tag:Environment": REPLACEME
+      register: environment_facts
+
+    - name: EC2 Instance Information
+      debug:
+        var: environment_facts
+
+    - name: Start instances
+      ec2:
+        instance_ids: '{{ item.instance_id }}'
+        state: running
+        wait: true
+      with_items: "{{ environment_facts.instances }}"
+
+    - pause:
+        seconds: 30

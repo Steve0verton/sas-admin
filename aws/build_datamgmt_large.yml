@@ -1,0 +1,378 @@
+# Purpose: Build EC2 instances and configure for a large singler server data management environment.
+# Key Dependencies:
+#   - AWS CLI configured on Ansible control node with AWS_ACCESS_KEY and AWS_SECRET_KEY available as environment variables (if sending to S3)
+#   - Become ROOT user to perform various administrative tasks on target machines
+#   - AMI snapshot for EC2 instances with appropriate configuration for target environment.
+#   - Ansible vars within each play highlighted with REPLACEME string
+#   - ec2 module parameters highlighted with REPLACEME string
+#   - AWS Route 53 configuration, hosted zone ID required and highlighted with REPLACEME string
+# Notes:
+#   - Runs on local ansible control note to build a target environment, then connects to target environment using
+#     dynamically assigned hostnames.  Reruning playbook may be challenging due to temporary inventory references.
+#   - Often times it is easier to destory environment and rebuild if playbook fails partially.
+#   - Adjust instance_type to meet sizing needs. Values below are provided as examples.
+#   - AWS Route 53 is used for internal hostname resolution.
+#   - Both forward and reverse lookup zones are leveraged for bi-directional name resolution.
+#   - Establish standardized tags for environments for administration management.  Examples provided in tasks below.
+---
+- name: Create and start primary controller
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  vars:
+    keypair: REPLACEME
+    instance_type: r5a.8xlarge
+    security_group: REPLACEME
+    placement_group: REPLACEME
+    image: REPLACEME
+    subnet_id: REPLACEME
+    instance_profile_name: REPLACEME
+    instance_count: 1
+  tasks:
+    - name: Launching instance
+      ec2:
+        vpc_subnet_id: "{{ subnet_id }}"
+        instance_type: "{{ instance_type }}"
+        key_name: "{{ keypair }}"
+        group: "{{ security_group }}"
+        placement_group: "{{ placement_group }}"
+        wait: yes
+        wait_timeout: 500
+        image: "{{ image }}"
+        ebs_optimized: yes
+        monitoring: yes
+        instance_profile_name: "{{ instance_profile_name }}"
+        instance_tags:
+          Name: DATAMGMT_PROD_CONTROLLER
+          Purpose: Data management
+          Environment: DATAMGMT_PROD
+          SDLC: PROD
+          Hostname: datamgmt.int.REPLACEME.com
+        count_tag:
+          Name: DATAMGMT_PROD_CONTROLLER
+        exact_count: "{{ instance_count }}"
+        volumes:
+          # ROOT Volume
+          - device_name: /dev/sda1
+            volume_type: gp2
+            volume_size: 50
+            delete_on_termination: yes
+          # SASDATA Volumes for RAID
+          - device_name: /dev/xvdi
+            volume_size: 1000
+            volume_type: gp2
+            delete_on_termination: yes
+          - device_name: /dev/xvdj
+            volume_size: 1000
+            volume_type: gp2
+            delete_on_termination: yes
+          - device_name: /dev/xvdk
+            volume_size: 1000
+            volume_type: gp2
+            delete_on_termination: yes
+          - device_name: /dev/xvdl
+            volume_size: 1000
+            volume_type: gp2
+            delete_on_termination: yes
+          - device_name: /dev/xvdm
+            volume_size: 1000
+            volume_type: gp2
+            delete_on_termination: yes
+          - device_name: /dev/xvdn
+            volume_size: 1000
+            volume_type: gp2
+            delete_on_termination: yes
+          - device_name: /dev/xvdo
+            volume_size: 1000
+            volume_type: gp2
+            delete_on_termination: yes
+          - device_name: /dev/xvdp
+            volume_size: 1000
+            volume_type: gp2
+            delete_on_termination: yes
+      register: ec2
+
+    - name: EC2 Instance Information
+      debug:
+        var: ec2
+
+    - name: Wait for SSH to come up
+      delegate_to: "{{ item.private_ip }}"
+      wait_for_connection:
+        delay: 60
+        timeout: 300
+      loop: "{{ ec2.instances }}"
+
+# NOTE: the Environment tag must match the same conceptual environment tag assigned from instance creation above.
+- name: Build Temporary Inventory of Hostnames
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - ec2_instance_facts:
+        filters:
+          instance-state-name: running
+          "tag:Environment": DATAMGMT_PROD
+      register: environment_facts
+
+    - add_host:
+        name: "{{ item.tags.Hostname }}"
+        ansible_host: "{{ item.private_ip_address }}"
+        group: datamgmt_prod_environment
+      with_items: "{{ environment_facts.instances }}"
+
+- name: Setup RAID0
+  hosts: datamgmt.int.REPLACEME.com
+  gather_facts: false
+  become: true
+  become_user: root
+  tasks:
+    - name: Install MDADM
+      yum:
+        name: mdadm
+        state: latest
+
+    - name: Configure RAID0 for SASDATA
+      command: mdadm --create --verbose /dev/md0 --level=0 --name=SASDATA --chunk=128 --raid-devices=4 /dev/nvme1n1 /dev/nvme2n1 /dev/nvme3n1 /dev/nvme4n1
+
+    - name: Configure RAID0 for SASWORK
+      command: mdadm --create --verbose /dev/md1 --level=0 --name=SASDATA --chunk=128 --raid-devices=4 /dev/nvme5n1 /dev/nvme6n1 /dev/nvme7n1 /dev/nvme8n1
+
+    - name: Setup config file
+      shell: mdadm --detail --scan --verbose | tee -a /etc/mdadm.conf
+
+    - name: Rebuild kernel
+      shell: dracut -H -f /boot/initramfs-$(uname -r).img $(uname -r)
+
+- name: Create XFS filesystems and mount volumes
+  hosts: datamgmt.int.REPLACEME.com
+  gather_facts: false
+  become: true
+  become_user: root
+  vars:
+    saswork_owner: sas
+    saswork_group: sas
+    sasdata_owner: sas
+    sasdata_group: sas
+    sascache_owner: sas
+    sascache_group: sas
+  tasks:
+    - name: Make XFS Filesystem for SASDATA
+      command: mkfs.xfs -L SASDATA /dev/md0
+
+    - name: Make XFS Filesystem for SASWORK
+      command: mkfs.xfs -L SASWORK /dev/md1
+
+    - name: Create SASCACHE directory
+      file:
+        path: /sascache
+        state: directory
+        owner: "{ sascache_owner }"
+        group: "{ sascache_group }"
+        mode: 01777
+
+    - name: Create SASDATA directory
+      file:
+        path: /sasdata
+        state: directory
+        owner: "{ sasdata_owner }"
+        group: "{ sasdata_group }"
+        mode: 0775
+
+    - name: Create SASWORK directory
+      file:
+        path: /saswork
+        state: directory
+        owner: "{ saswork_owner }"
+        group: "{ saswork_group }"
+        mode: 01777
+
+    - name: Reload Daemon to prevent mount problems
+      command: systemctl daemon-reload
+
+    - name: Mount Filesystem to SASDATA
+      mount:
+        path: /sasdata
+        src: /dev/md0
+        fstype: xfs
+        opts: noatime,nodiratime,nobarrier,nofail
+        state: mounted
+
+    - name: Mount Filesystem to SASWORK
+      mount:
+        path: /saswork
+        src: /dev/md1
+        fstype: xfs
+        opts: noatime,nodiratime,nobarrier,nofail
+        state: mounted
+
+    - name: Update permissions and ownership for SASCACHE
+      file:
+        path: /sascache
+        owner: "{ sascache_owner }"
+        group: "{ sascache_group }"
+        mode: 01777
+
+    - name: Update permissions and ownership for SASDATA
+      file:
+        path: /sasdata
+        owner: "{ sasdata_owner }"
+        group: "{ sasdata_group }"
+        mode: 0775
+
+    - name: Update permissions and ownership for SASWORK
+      file:
+        path: /saswork
+        state: directory
+        owner: "{ saswork_owner }"
+        group: "{ saswork_group }"
+        mode: 01777
+
+    - name: Reload Daemon to prevent creation refresh problems
+      command: systemctl daemon-reload
+
+- name: Create, turn on, and mount swap file
+  hosts: datamgmt.int.REPLACEME.com
+  gather_facts: false
+  become: true
+  become_user: root
+  tasks:
+    - name: Create swap file within /sascache
+      command: dd if=/dev/zero of=/sascache/swapfile bs=1024 count=5120000
+
+    - name: Format swapfile
+      command: mkswap /sascache/swapfile
+
+    - name: Set swap file permissions
+      file:
+        path: /sascache/swapfile
+        owner: root
+        group: root
+        mode: 0600
+
+    - name: Add the file to the system as a swap file
+      command: swapon /sascache/swapfile
+
+    - name: Write swap entry in fstab
+      mount:
+        name: none
+        src: /sascache/swapfile
+        fstype: swap
+        opts: sw
+        passno: 0
+        dump: 0
+        state: present
+
+    - name: Refresh Daemon
+      command: systemctl daemon-reload
+
+- name: Setup SASDATA directory structure
+  hosts: datamgmt.int.REPLACEME.com
+  gather_facts: false
+  become: true
+  become_user: root
+  vars:
+    sasdata_owner: sas
+    sasdata_group: sas
+  tasks:
+    # NOTE: The next series of tasks setup a common directory structure for organizing files under a mock "project1".
+    - name: Setup project1 directory structure
+      file:
+        path: /sasdata/project1
+        state: directory
+        owner: "{ sasdata_owner }"
+        group: "{ sasdata_group }"
+        mode: 0775
+
+    - name: Setup project1 directory structure
+      file:
+        path: /sasdata/project1/dq_check
+        state: directory
+        owner: "{ sasdata_owner }"
+        group: "{ sasdata_group }"
+        mode: 0775
+
+    - name: Setup project1 directory structure
+      file:
+        path: /sasdata/project1/err
+        state: directory
+        owner: "{ sasdata_owner }"
+        group: "{ sasdata_group }"
+        mode: 0775
+
+    - name: Setup project1 directory structure
+      file:
+        path: /sasdata/project1/log
+        state: directory
+        owner: "{ sasdata_owner }"
+        group: "{ sasdata_group }"
+        mode: 0775
+
+    - name: Setup project1 directory structure
+      file:
+        path: /sasdata/project1/source
+        state: directory
+        owner: "{ sasdata_owner }"
+        group: "{ sasdata_group }"
+        mode: 0775
+
+    - name: Setup project1 directory structure
+      file:
+        path: /sasdata/project1/stage
+        state: directory
+        owner: "{ sasdata_owner }"
+        group: "{ sasdata_group }"
+        mode: 0775
+
+- name: Set Hostnames for all servers
+  hosts: datamgmt_prod_environment
+  gather_facts: true
+  become: true
+  become_user: root
+  tasks:
+    - name: Run hostname command on remote servers to register with DNS
+      command: hostnamectl set-hostname {{ inventory_hostname }}
+
+- name: Update internal hostnames in Route 53
+  hosts: localhost
+  gather_facts: true
+  tasks:
+    - name: Collect hostnames and private IPs
+      ec2_instance_facts:
+        filters:
+          instance-state-name: running
+          "tag:Environment": DATAMGMT_PROD
+      register: environment_facts
+
+    - name: Update Route 53 forward lookup zone
+      route53:
+        state: present
+        zone: int.REPLACEME.com
+        hosted_zone_id: REPLACEME
+        record: "{{ item.tags.Hostname }}"
+        type: A
+        ttl: 300
+        private_zone: yes
+        overwrite: yes
+        value: "{{ item.private_ip_address }}"
+      with_items: "{{ environment_facts.instances }}"
+
+    - name: Update Route 53 reverse lookup zone
+      route53:
+        state: present
+        zone: in-addr.arpa
+        hosted_zone_id: REPLACEME
+        record: "{{(item.private_ip_address.split('.'))[::-1]|join('.')}}.in-addr.arpa"
+        type: PTR
+        ttl: 300
+        private_zone: yes
+        overwrite: yes
+        value: "{{ item.tags.Hostname }}"
+      with_items: "{{ environment_facts.instances }}"
+
+- name: REBOOT Servers for DNS registrations to take affect
+  hosts: datamgmt_prod_environment
+  gather_facts: false
+  become: true
+  become_user: root
+  tasks:
+    - reboot:

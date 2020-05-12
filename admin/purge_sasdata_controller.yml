@@ -1,0 +1,29 @@
+# Purpose: Purge subdirectories within SASDATA.
+# Key Dependencies:
+#   - Become SAS user (or whichever service account can purge the subdirectories)
+#   - SAS Viya deployment inventory file
+#   - Defined directory structure within conceptual SASDATA
+#   - Update list of directory paths using the "with_items" section in the task to collect files to delete
+---
+- name: Purging SASDATA directories
+  hosts: programming
+  gather_facts: false
+  become: true
+  become_user: sas
+  tasks:
+    - name: Collect files to delete
+      find:
+        paths: "{{ item }}"
+        recurse: true
+      with_items:
+        - /sasdata/sixdegreerisk/dq_check
+        - /sasdata/sixdegreerisk/err
+        - /sasdata/sixdegreerisk/log
+        - /sasdata/sixdegreerisk/stage
+      register: files_to_delete
+
+    - name: Remove files
+      file:
+        path: "{{ item.path }}"
+        state: absent
+      with_items: "{{ files_to_delete.files }}"

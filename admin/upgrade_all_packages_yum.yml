@@ -2,7 +2,7 @@
 # Key Dependencies:
 #   - Become ROOT user to run yum
 #   - SAS Viya deployment inventory file
-# NOTES:
+# Notes:
 #   - This will force SAS to update packages as well if SAS Viya is deployed.
 ---
 - name: Upgrade All Packages with YUM
