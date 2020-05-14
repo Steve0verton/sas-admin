@@ -4,6 +4,15 @@ Collection of Ansible orchestration playbooks for day to day SAS administration 
 
 **Disclaimer:** Ansible tasks attempt to be a universal as possible. Confirm environment references are supported by the target environment capabilities and security requirements. For example, Ansible changing user to ROOT or writing files to /tmp. Review, test and confirm Ansible playbook tasks in non-production environments before supporting production activities.
 
+# Table of Contents
+
+   * [Components](#components)
+   * [Installation](#installation)
+   * [Usage](#usage)
+   * [Standards](#standards)
+   * [Reference](#reference)
+   * [Author](#author)
+
 # Components
 
 **admin**:
@@ -72,6 +81,10 @@ export AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 export AWS_DEFAULT_REGION=us-east-1
 ```
 
+# Usage
+
+Ansible playbooks and tasks should be carefully inspected, analyzed and tested before leveraging in a full production environment.  Playbooks are meant to provide a process to follow with configuration dependening on the target environment.  Broader playbooks and process flows can be constructed from the individual components.  Additional thoughts and suggestions are encouraged. Please leverage GitHub issue tracking to document.
+
 # Standards
 
 ## File Properties
@@ -102,3 +115,7 @@ Additional properties such as last modified timestamps, authorship and revision 
 # Reference
 
  - [How Ansible Works](https://www.ansible.com/overview/how-ansible-works) - RedHat
+ 
+# Author
+
+ - [Steve Overton](https://www.linkedin.com/in/overton/)
