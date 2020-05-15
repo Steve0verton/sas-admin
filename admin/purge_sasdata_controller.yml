@@ -7,14 +7,14 @@
 ---
 - name: Purging SASDATA directories
   hosts: programming
-  gather_facts: false
-  become: true
+  gather_facts: no
+  become: yes
   become_user: sas
   tasks:
     - name: Collect files to delete
       find:
         paths: "{{ item }}"
-        recurse: true
+        recurse: yes
       with_items:
         - /sasdata/sixdegreerisk/dq_check
         - /sasdata/sixdegreerisk/err

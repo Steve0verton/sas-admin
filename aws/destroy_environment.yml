@@ -1,0 +1,63 @@
+# Purpose: Destory an entire environment assuming tagging methodology is used and EBS volumes are set to terminate when the instance does.
+# Key Dependencies:
+#   - AWS CLI configured on Ansible control node with AWS_ACCESS_KEY and AWS_SECRET_KEY available as environment variables (if sending to S3)
+#   - AWS "Environment" tag highlighted with REPLACEME string
+#   - AWS Route 53 configuration, hosted zone ID required and highlighted with REPLACEME string
+# Notes:
+#   - Runs on local ansible control note to build a target environment, then connects to target environment using
+#     dynamically assigned hostnames.  Reruning playbook may be challenging due to temporary inventory references.
+#   - Often times it is easier to destory environment and rebuild if playbook fails partially.
+#   - Adjust instance_type to meet sizing needs. Values below are provided as examples.
+#   - Adjust instance_count on the CAS worker node creation to scale with data performance needs.
+#   - AWS Route 53 is used for internal hostname resolution.
+#   - Both forward and reverse lookup zones are leveraged for bi-directional name resolution.
+#   - Establish standardized tags for environments for administration management.  Examples provided in tasks below.
+---
+- name: Remove hostnames in Route 53
+  hosts: localhost
+  gather_facts: yes
+  tasks:
+    - name: Collect hostnames and private IPs
+      ec2_instance_facts:
+        filters:
+          "tag:Environment": REPLACEME
+      register: environment_facts
+
+    - name: Remove forward lookup zone
+      route53:
+        state: absent
+        zone: int.REPLACEME.com
+        hosted_zone_id: REPLACEME
+        record: "{{ item.tags.Hostname }}"
+        type: A
+        ttl: 300
+        private_zone: yes
+        value: "{{ item.private_ip_address }}"
+      with_items: "{{ environment_facts.instances }}"
+
+    - name: Remove reverse lookup zone entry
+      route53:
+        state: absent
+        zone: in-addr.arpa
+        hosted_zone_id: REPLACEME
+        record: "{{(item.private_ip_address.split('.'))[::-1]|join('.')}}.in-addr.arpa"
+        type: PTR
+        ttl: 300
+        private_zone: yes
+        value: "{{ item.tags.Hostname }}"
+      with_items: "{{ environment_facts.instances }}"
+
+- name: Destroy instances
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - ec2_instance_facts:
+        filters:
+          "tag:Environment": REPLACEME
+      register: environment_facts
+
+    - name: Terminate EC2 instances
+      ec2:
+        state: 'absent'
+        instance_ids: '{{ item.instance_id }}'
+      with_items: "{{ environment_facts.instances }}"

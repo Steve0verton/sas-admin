@@ -7,8 +7,8 @@
 ---
 - name: Update SAS Configuration
   hosts: programming
-  gather_facts: false
-  become: true
+  gather_facts: no
+  become: yes
   become_user: sas
   tasks:
     - name: Update SASV9.CFG for SPRE Foundation
@@ -33,8 +33,8 @@
 # NOTE: SAS Viya assumes CGroups has been installed
 - name: Update CAS memory limit for CGroups
   hosts: sas_casserver_primary
-  gather_facts: false
-  become: true
+  gather_facts: no
+  become: yes
   become_user: sas
   tasks:
     - blockinfile:
@@ -48,8 +48,8 @@
 
 - name: Create SAS profile
   hosts: programming
-  gather_facts: false
-  become: true
+  gather_facts: no
+  become: yes
   become_user: root
   tasks:
     - name: Touch file to create sas.sh profile
@@ -77,8 +77,8 @@
 
 - name: Update SAS Workspace Server Configuration
   hosts: programming
-  gather_facts: false
-  become: true
+  gather_facts: no
+  become: yes
   become_user: sas
   tasks:
     - name: Update SASV9.CFG
@@ -98,8 +98,8 @@
 
 - name: Update ODBC configuration for SAS Foundation Environment
   hosts: programming
-  gather_facts: false
-  become: true
+  gather_facts: no
+  become: yes
   become_user: sas
   tasks:
     - name: Update sasenv_local

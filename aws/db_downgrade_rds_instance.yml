@@ -6,7 +6,7 @@
 ---
 - name: Downgrade Database Instance Class
   hosts: localhost
-  gather_facts: false
+  gather_facts: no
   tasks:
     - rds:
         command: modify

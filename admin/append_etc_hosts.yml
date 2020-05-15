@@ -6,8 +6,8 @@
 ---
 - name: Add local environment private IPs to /etc/hosts
   hosts: sas_all
-  gather_facts: false
-  become: true
+  gather_facts: no
+  become: yes
   become_user: root
   tasks:
     - name: Append /etc/hosts

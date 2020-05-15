@@ -17,7 +17,7 @@
 ---
 - name: Create and start primary controller
   hosts: localhost
-  gather_facts: false
+  gather_facts: no
   connection: local
   vars:
     keypair: REPLACEME
@@ -106,7 +106,7 @@
 # NOTE: the Environment tag must match the same conceptual environment tag assigned from instance creation above.
 - name: Build Temporary Inventory of Hostnames
   hosts: localhost
-  gather_facts: false
+  gather_facts: no
   tasks:
     - ec2_instance_facts:
         filters:
@@ -122,8 +122,8 @@
 
 - name: Setup RAID0
   hosts: datamgmt.int.REPLACEME.com
-  gather_facts: false
-  become: true
+  gather_facts: no
+  become: yes
   become_user: root
   tasks:
     - name: Install MDADM
@@ -145,8 +145,8 @@
 
 - name: Create XFS filesystems and mount volumes
   hosts: datamgmt.int.REPLACEME.com
-  gather_facts: false
-  become: true
+  gather_facts: no
+  become: yes
   become_user: root
   vars:
     saswork_owner: sas
@@ -232,8 +232,8 @@
 
 - name: Create, turn on, and mount swap file
   hosts: datamgmt.int.REPLACEME.com
-  gather_facts: false
-  become: true
+  gather_facts: no
+  become: yes
   become_user: root
   tasks:
     - name: Create swap file within /sascache
@@ -267,8 +267,8 @@
 
 - name: Setup SASDATA directory structure
   hosts: datamgmt.int.REPLACEME.com
-  gather_facts: false
-  become: true
+  gather_facts: no
+  become: yes
   become_user: root
   vars:
     sasdata_owner: sas
@@ -325,8 +325,8 @@
 
 - name: Set Hostnames for all servers
   hosts: datamgmt_prod_environment
-  gather_facts: true
-  become: true
+  gather_facts: yes
+  become: yes
   become_user: root
   tasks:
     - name: Run hostname command on remote servers to register with DNS
@@ -334,7 +334,7 @@
 
 - name: Update internal hostnames in Route 53
   hosts: localhost
-  gather_facts: true
+  gather_facts: yes
   tasks:
     - name: Collect hostnames and private IPs
       ec2_instance_facts:
@@ -371,8 +371,8 @@
 
 - name: REBOOT Servers for DNS registrations to take affect
   hosts: datamgmt_prod_environment
-  gather_facts: false
-  become: true
+  gather_facts: no
+  become: yes
   become_user: root
   tasks:
     - reboot:

@@ -5,7 +5,7 @@
 ---
 - name: Upgrade Database Instance Class
   hosts: localhost
-  gather_facts: true
+  gather_facts: no
   tasks:
     - rds:
         command: modify

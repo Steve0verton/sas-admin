@@ -7,8 +7,8 @@
 ---
 - name: Insert hostname and fully qualified hostname in /etc/hosts just prior to localhost definition
   hosts: sas_all
-  gather_facts: true
-  become: true
+  gather_facts: yes
+  become: yes
   become_user: root
   tasks:
     - name: Insert into /etc/hosts

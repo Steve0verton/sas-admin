@@ -8,7 +8,7 @@
 ---
 - name: Downgrade EBS Volume Storage
   hosts: localhost
-  gather_facts: false
+  gather_facts: no
   tasks:
     # APP
     - name: Change to Cold Storage

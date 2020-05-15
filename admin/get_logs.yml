@@ -8,8 +8,8 @@
 ---
 - name: Capture SAS logs
   hosts: sas_all
-  gather_facts: true
-  become: true
+  gather_facts: yes
+  become: yes
   become_user: root
   tasks:
     - name: Compress and archive SAS logs from /var/log/sas/viya/*/
@@ -44,8 +44,8 @@
 # NOTE: Remove this play which pushes to S3 if AWS not leveraged or not needed. Replace with another process or manually retrieve logs.
 - name: Push logs to S3
   hosts: sas_all
-  gather_facts: true
-  become: true
+  gather_facts: yes
+  become: yes
   become_user: root
   vars:
     s3_target_bucket: REPLACEME
@@ -85,8 +85,8 @@
 
 - name: Cleanup logs
   hosts: sas_all
-  gather_facts: true
-  become: true
+  gather_facts: yes
+  become: yes
   become_user: root
   tasks:
     - name: Cleanup /tmp/sas_logs.tar.gz

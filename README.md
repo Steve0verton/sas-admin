@@ -40,7 +40,7 @@ Collection of Ansible orchestration playbooks for day to day SAS administration 
  * Requires SAS Foundation
  * Assumes any SAS dependencies such as CAS or metadata aware connections are made within program or autoexec definition
 
-**validation (upcoming)**:
+**validation**:
  * Tasks to validate SAS microservices
  * Ansible playbooks and tasks written in YAML
  * Requires configured AWS command line interface tool
@@ -106,7 +106,7 @@ Additional properties such as last modified timestamps, authorship and revision 
  - Indentation = 2 spaces with no tabs.
  - Empty line separating each Ansible task.
  - Tasks are named.
- - Boolean values for Ansible plays are specified as "true" and "false", individual tasks may use "yes" or "no" deepending on module requirements.
+ - Boolean values for Ansible plays are specified as "yes" and "no".
  - Important variables are defined within play using **vars** list.
  - The phrase **NOTE:** is used to highlight important notes throughout code.
  - The phrase **TODO:** is used to note future enhancements.
@@ -115,7 +115,7 @@ Additional properties such as last modified timestamps, authorship and revision 
 # Reference
 
  - [How Ansible Works](https://www.ansible.com/overview/how-ansible-works) - RedHat
- 
+
 # Author
 
  - [Steve Overton](https://www.linkedin.com/in/overton/)

@@ -21,3 +21,11 @@ and this repository adheres to [Semantic Versioning](https://semver.org/spec/v2.
 
 ### Changed
 - Minor updates to insert_hostname_etc_hosts.yml, upgrade_all_packages_yum.yml and mount_sasdata_controller.yml
+
+## [1.1.1] - 2020-05-15
+### Added
+- Initial version of validate_environment.yml within **validation** component.
+- aws/destroy_environment.yml to destory an entire environment (if tagged appropriately).
+
+### Changed
+- Update all boolean values to "yes" and "no" instead of "true" and "false" for consistency.

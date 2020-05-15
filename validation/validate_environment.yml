@@ -1,0 +1,77 @@
+# Purpose: Run a series of tests to capture facts about an environment.
+# Key Dependencies:
+#   - SAS Viya deployment inventory file
+#   - Outbound public WAN traffic flow to check public facing IP address
+#   - Location to store output files to /tmp on control node
+#   - URL to test if SASLogon is active
+---
+- name: Check Connectivity
+  hosts: sas_all
+  gather_facts: no
+  any_errors_fatal: yes
+  tasks:
+    - name: Check network connectivity of the hosts from control node
+      ping:
+
+- name: Gather facts about entire environment from Ansible perspective and save to /tmp on control node
+  hosts: sas_all
+  gather_facts: yes
+  tasks:
+    - name: Output ansible environment facts
+      debug:
+        var: hostvars
+
+    - name: Save output to disk
+      delegate_to: localhost
+      run_once: true
+      copy:
+        content: "{{ hostvars | to_nice_json }}"
+        dest: "/tmp/environment_validation_{{ ansible_date_time.iso8601_basic_short }}.json"
+
+- name: Check Services
+  hosts: sas_all
+  gather_facts: no
+  any_errors_fatal: yes
+  tasks:
+    - name: Collect facts about system services
+      service_facts:
+      register: services_state
+
+    - name: Output state of services
+      debug:
+        var: services_state
+
+    - name: Save to disk
+      delegate_to: localhost
+      run_once: true
+      copy:
+        content: "{{ services_state | to_nice_json }}"
+        dest: "/tmp/system_service_validation_{{ ansible_date_time.iso8601_basic_short }}.json"
+
+- name: SAS Web Application Checks
+  hosts: localhost
+  gather_facts: no
+  any_errors_fatal: yes
+  tasks:
+    - name: Connect to SASLogon
+      uri:
+        url: https://REPLACEME.com/SASLogon/login
+        method: GET
+        return_content: yes
+
+- name: Confirm public IP address of web servers
+  hosts: sas_all
+  gather_facts: no
+  any_errors_fatal: yes
+  tasks:
+    - name: Determine public facing IP address
+      uri:
+        url: http://ifconfig.me/ip
+        return_content: yes
+      register: ip_response
+
+    - name: Output public IP address
+      debug:
+        var: ip_response
+
+    # TODO: Combine the ansible facts and output to disk

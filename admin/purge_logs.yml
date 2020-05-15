@@ -6,8 +6,8 @@
 ---
 - name: Purge SAS Logs
   hosts: sas_all
-  gather_facts: true
-  become: true
+  gather_facts: yes
+  become: yes
   become_user: root
   vars:
     age_retention_limit: 7d
@@ -17,7 +17,7 @@
         paths: /var/log/sas/viya
         patterns: '*.log'
         age: "{{ age_retention_limit }}"
-        recurse: true
+        recurse: yes
       register: files_to_delete
 
     - name: Remove log files

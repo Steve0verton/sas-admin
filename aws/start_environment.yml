@@ -2,7 +2,7 @@
 #          Tag "Environment" is used below, but any AWS tag can be leveraged to identify the EC2 instances to start.
 # Key Dependencies:
 #   - AWS CLI configured with AWS_ACCESS_KEY and AWS_SECRET_KEY available as environment variables (if sending to S3).
-#   - Replace tag filter in ec2_instance_facts task with target environment to start.
+#   - AWS "Environment" tag highlighted with REPLACEME string.
 #   - Target environment has appropriate tags defined in AWS. Tag name = Environment.
 ---
 - name: Startup Environment
@@ -22,7 +22,7 @@
       ec2:
         instance_ids: '{{ item.instance_id }}'
         state: running
-        wait: true
+        wait: yes
       with_items: "{{ environment_facts.instances }}"
 
     - pause:

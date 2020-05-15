@@ -8,8 +8,8 @@
 ---
 - name: Setup SASDATA on programming environment server
   hosts: programming
-  gather_facts: false
-  become: true
+  gather_facts: no
+  become: yes
   become_user: root
   vars:
     sasdata_owner: sas

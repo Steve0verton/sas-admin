@@ -7,8 +7,8 @@
 ---
 - name: Upgrade All Packages with YUM
   hosts: sas_all
-  gather_facts: false
-  become: true
+  gather_facts: no
+  become: yes
   become_user: root
   tasks:
     - yum:

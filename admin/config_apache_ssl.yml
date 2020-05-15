@@ -1,4 +1,4 @@
-# Purpose: Copy SSL certificates to target SAS Apache web server and configure SSL. 
+# Purpose: Copy SSL certificates to target SAS Apache web server and configure SSL.
 # Key Dependencies:
 #   - Become ROOT user
 #   - SAS Viya deployment inventory file
@@ -12,8 +12,8 @@
 #NOTE: Remove this play if AWS S3 storage is not used and replace with a play or manual task to copy key files to target server.
 - name: Get SSL certificate files from source location
   hosts: httpproxy
-  gather_facts: false
-  become: true
+  gather_facts: no
+  become: yes
   become_user: root
   vars:
     s3_source_bucket: REPLACEME       #NOTE: Bucket name without leading or trailing slashes
@@ -66,8 +66,8 @@
 
 - name: Configure Apache
   hosts: httpproxy
-  gather_facts: false
-  become: true
+  gather_facts: no
+  become: yes
   become_user: root
   vars:
     s3_source_cert_body: REPLACEME     #NOTE: Include file extension

@@ -7,8 +7,8 @@
 ---
 - name: Setup SASCACHE for CAS workers
   hosts: sas_casserver_worker
-  gather_facts: false
-  become: true
+  gather_facts: no
+  become: yes
   become_user: root
   vars:
     sascache_owner: sas
