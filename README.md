@@ -6,12 +6,19 @@ Collection of Ansible orchestration playbooks for day to day SAS administration 
 
 ## Table of Contents
 
-   * [Components](#components)
-   * [Installation](#installation)
-   * [Usage](#usage)
-   * [Standards](#standards)
-   * [Reference](#reference)
-   * [Author](#author)
+* [Project Directory Structure](#project-directory-structure)
+* [Installation](#installation)
+  * [Ansible](#ansible)
+  * [AWS CLI Installation](#aws-cli-installation)
+  * [AWS CLI Configuration](#aws-cli-configuration)
+* [Usage](#usage)
+* [Standards](#standards)
+  * [File Properties](#file-properties)
+  * [Header Properties](#header-properties)
+  * [Coding Standards](#coding-standards)
+* [Reference](#reference)
+* [Author Contact](#author)
+
 
 ## Project Directory Structure
 
@@ -116,6 +123,6 @@ Additional properties such as last modified timestamps, authorship and revision 
 
  - [How Ansible Works](https://www.ansible.com/overview/how-ansible-works) - RedHat
 
-## Author
+## Author Contact
 
  - [Steve Overton](https://www.linkedin.com/in/overton/)
