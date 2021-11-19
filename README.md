@@ -1,6 +1,6 @@
 # SAS Administration Toolkit
 
-Collection of Ansible orchestration playbooks for day to day SAS administration tasks including SAS program batch execution.  SAS Viya is the intended platform.  SAS 9.X may be supported by certain Ansible playbooks within this repository but should be reconciled and assessed with discretion.  Playbooks for AWS cloud resource management are intended to be used for environment creation and management in a more efficient and standardized manner for cloud deployments.
+Collection of Ansible orchestration playbooks for day to day SAS administration tasks including SAS program batch execution.  SAS Viya version 3.X is the intended platform **(not SAS Viya version 4.x)**.  SAS 9.X may be supported by certain Ansible playbooks within this repository but should be reconciled and assessed with discretion.  Playbooks for AWS cloud resource management are intended to be used for environment creation and management in a more efficient and standardized manner for cloud deployments.
 
 **Disclaimer:** Ansible tasks attempt to be a universal as possible. Confirm environment references are supported by the target environment capabilities and security requirements. For example, Ansible changing user to ROOT or writing files to /tmp. Review, test and confirm Ansible playbook tasks in non-production environments before supporting production activities.
 
