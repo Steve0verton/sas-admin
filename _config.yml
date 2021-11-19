@@ -1,1 +1,3 @@
 theme: jekyll-theme-slate
+title: SAS Administration Toolkit
+description: Collection of Ansible orchestration playbooks for day to day SAS administration tasks including SAS program batch execution.
